@@ -120,7 +120,7 @@ class ContactScopesUiHelper {
         Uri uri = getUri(ContactsContract.RawContacts.CONTENT_URI, rawContactId);
         String[] displayNameProjection = { ContactsContract.RawContacts.DISPLAY_NAME_PRIMARY };
 
-        try (Cursor c = scp.provider.query(uri, displayNameProjection, null, null)) {
+        try (Cursor c = scp.provider().query(uri, displayNameProjection, null, null)) {
             if (c != null && c.moveToFirst()) {
                 return c.getString(0);
             }
@@ -132,7 +132,7 @@ class ContactScopesUiHelper {
         Uri uri = getUri(ContactsContract.Contacts.CONTENT_URI, contactId);
         String[] proj = { ContactsContract.Contacts.NAME_RAW_CONTACT_ID };
 
-        try (Cursor c = scp.provider.query(uri, proj, null, null)) {
+        try (Cursor c = scp.provider().query(uri, proj, null, null)) {
             if (c != null && c.moveToFirst()) {
                 long nameRawContactId = c.getLong(0);
                 return getDisplayName(scp, nameRawContactId);
@@ -164,7 +164,7 @@ class ContactScopesUiHelper {
             String[] dataTableProjection = { ContactsContract.Data.RAW_CONTACT_ID,
                 ContactsContract.Data.DATA1, ContactsContract.Data.DATA2 };
 
-            try (Cursor c = scp.provider.query(uri, dataTableProjection, null, null)) {
+            try (Cursor c = scp.provider().query(uri, dataTableProjection, null, null)) {
                 if (c != null && c.moveToFirst()) {
                     return new CommonDataColumns(c.getLong(0), c.getString(1), c.getString(2));
                 }
@@ -179,7 +179,7 @@ class ContactScopesUiHelper {
         final int len = uris.length;
         long[] ids = new long[len];
         for (int i = 0; i < len; ++i) {
-            try (Cursor c = scp.provider.query(uris[i], proj, null, null)) {
+            try (Cursor c = scp.provider().query(uris[i], proj, null, null)) {
                 if (c != null && c.moveToFirst()) {
                     ids[i] = c.getLong(0);
                 } else {
@@ -228,7 +228,7 @@ class ContactScopesUiHelper {
                 + ContactsContract.Groups.GROUP_IS_READ_ONLY + "=0";
         String sortOrder = ContactsContract.Groups.TITLE + " COLLATE LOCALIZED ASC";
 
-        try (Cursor c = scp.provider.query(uri, GROUP_PROJECTION, selection, null, sortOrder)) {
+        try (Cursor c = scp.provider().query(uri, GROUP_PROJECTION, selection, null, sortOrder)) {
             if (c == null) {
                 return null;
             }
@@ -248,7 +248,7 @@ class ContactScopesUiHelper {
         String sel = BaseColumns._ID + '=' + groupId +
                 " AND " + ContactsContract.Groups.DELETED + "=0";
 
-        try (Cursor c = scp.provider.query(uri, GROUP_PROJECTION, sel, null, null)) {
+        try (Cursor c = scp.provider().query(uri, GROUP_PROJECTION, sel, null, null)) {
             if (c != null && c.getCount() == 1 && c.moveToFirst()) {
                 return getGroupInfo(scp, c);
             }

@@ -33,7 +33,6 @@ import static android.ext.cscopes.ContactScope.TYPE_NUMBER;
 import static com.android.providers.contacts.ContactsProvider2.*;
 
 public class ScopedContactsProvider extends RedirectedContentProvider {
-    ContactsProvider2 provider;
 
     @Override
     public boolean onCreate() {
@@ -41,11 +40,26 @@ public class ScopedContactsProvider extends RedirectedContentProvider {
         authorityOverride = ContactsContract.AUTHORITY;
 
         super.onCreate();
-
-        IContentProvider iprovider = requireContext().getContentResolver().acquireProvider(ContactsContract.AUTHORITY);
-        provider = (ContactsProvider2) ContentProvider.coerceToLocalContentProvider(iprovider);
-
         return true;
+    }
+
+    private volatile ContactsProvider2 cachedProvider;
+
+    ContactsProvider2 provider() {
+        ContactsProvider2 res = cachedProvider;
+        if (res != null) {
+            return res;
+        }
+        synchronized (this) {
+            res = cachedProvider;
+            if (res != null) {
+                return res;
+            }
+            IContentProvider iprovider = requireContext().getContentResolver().acquireProvider(ContactsContract.AUTHORITY);
+            res = (ContactsProvider2) ContentProvider.coerceToLocalContentProvider(iprovider);
+            cachedProvider = res;
+            return res;
+        }
     }
 
     private static void checkAccess(@Nullable GosPackageState ps) {
@@ -165,7 +179,7 @@ public class ScopedContactsProvider extends RedirectedContentProvider {
 
         if (DEBUG) Log.w(TAG, "query selection " + sel);
 
-        return provider.query(uri, projection, sel.toString(), selectionArgs, sortOrder);
+        return provider().query(uri, projection, sel.toString(), selectionArgs, sortOrder);
     }
 
     private final ArraySet<String> ALLOWED_CURSOR_EXTRAS = new ArraySet<>(new String[] {
@@ -293,7 +307,7 @@ public class ScopedContactsProvider extends RedirectedContentProvider {
     }
 
     private long[] queryIds(Uri uri, String[] projection, String selection) {
-        try (Cursor c = provider.query(uri, projection, selection, null, null)) {
+        try (Cursor c = provider().query(uri, projection, selection, null, null)) {
             if (c == null) {
                 return EmptyArray.LONG;
             }
